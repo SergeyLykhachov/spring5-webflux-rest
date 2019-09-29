@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,6 +46,33 @@ public class VendorController {
     public Mono<Vendor> update(@PathVariable String id, @RequestBody Vendor vendor) {
         vendor.setId(id);
         return this.vendorRepository.save(vendor);
+    }
+
+    @PatchMapping("{id}")
+    Mono<Vendor> patch(@PathVariable String id, @RequestBody Vendor vendor) {
+
+        Vendor foundVendor = vendorRepository.findById(id).block();
+
+        if (foundVendor != null) {
+
+            boolean isDifferent = false;
+
+            if (!foundVendor.getFirstName().equals(vendor.getFirstName())) {
+                foundVendor.setFirstName(vendor.getFirstName());
+                isDifferent = true;
+            }
+
+            if (!foundVendor.getLastName().equals(vendor.getLastName())) {
+                foundVendor.setLastName(vendor.getLastName());
+                isDifferent = true;
+            }
+
+            return isDifferent ? vendorRepository.save(foundVendor) : Mono.just(foundVendor);
+
+        } else {
+            return Mono.empty();
+        }
+
     }
 
 }

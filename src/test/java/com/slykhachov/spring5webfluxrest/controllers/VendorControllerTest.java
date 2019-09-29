@@ -11,14 +11,13 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 
 public class VendorControllerTest {
 
-    VendorRepository vendorRepository;
-    VendorController vendorController;
-    WebTestClient webTestClient;
+    private VendorRepository vendorRepository;
+    private VendorController vendorController;
+    private WebTestClient webTestClient;
 
     @Before
     public void setUp() {
@@ -62,7 +61,9 @@ public class VendorControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void createVendorTest() {
+
         BDDMockito.given(vendorRepository.saveAll(any(Publisher.class)))
                 .willReturn(Flux.just(Vendor.builder().build()));
 
@@ -95,6 +96,78 @@ public class VendorControllerTest {
                 .exchange()
                 .expectStatus()
                 .isOk();
+    }
+
+    @Test
+    public void patchNoChangeTest() {
+
+        String id = "abcdefghijklmn";
+
+        BDDMockito.given(vendorRepository.findById(any(String.class)))
+                .willReturn(
+                        Mono.just(
+                                Vendor.builder()
+                                        .id(id)
+                                        .firstName("John")
+                                        .lastName("Doe")
+                                        .build()
+                        )
+                );
+
+        Mono<Vendor> mono = Mono.just(
+                Vendor.builder()
+                        .id(id)
+                        .firstName("John")
+                        .lastName("Doe")
+                        .build()
+        );
+
+        webTestClient.patch()
+                .uri(VendorController.BASE_URL + "abcdefghijklmn")
+                .body(mono, Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        BDDMockito.verify(vendorRepository, Mockito.never()).save(any());
+
+    }
+
+    @Test
+    public void patchWithChangeTest() {
+
+        String id = "abcdefghijklmn";
+
+        BDDMockito.given(vendorRepository.findById(any(String.class)))
+                .willReturn(
+                        Mono.just(
+                                Vendor.builder()
+                                        .id(id)
+                                        .firstName("John")
+                                        .lastName("Doe")
+                                        .build()
+                        )
+        );
+
+        Mono<Vendor> mono = Mono.just(
+            Vendor.builder()
+                .id(id)
+                .firstName("John")
+                .lastName("Deere")
+                .build()
+        );
+
+        BDDMockito.given(vendorRepository.save(any(Vendor.class)))
+                .willReturn(mono);
+
+        webTestClient.patch()
+                .uri(VendorController.BASE_URL + id)
+                .body(mono, Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        BDDMockito.verify(vendorRepository).save(any());
     }
 
 }
