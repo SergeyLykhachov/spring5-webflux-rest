@@ -95,7 +95,7 @@ public class CategoryControllerTest {
     @Test
     public void testPatchWithChanges() {
         given(categoryRepository.findById(anyString()))
-                .willReturn(Mono.just(Category.builder().build()));
+                .willReturn(Mono.just(Category.builder().description("Old Description").build()));
 
         given(categoryRepository.save(any(Category.class)))
                 .willReturn(Mono.just(Category.builder().build()));
@@ -114,13 +114,14 @@ public class CategoryControllerTest {
 
     @Test
     public void testPatchNoChanges() {
+        String description = "Some Description";
         given(categoryRepository.findById(anyString()))
-                .willReturn(Mono.just(Category.builder().build()));
+                .willReturn(Mono.just(Category.builder().description(description).build()));
 
         given(categoryRepository.save(any(Category.class)))
                 .willReturn(Mono.just(Category.builder().build()));
 
-        Mono<Category> catToUpdateMono = Mono.just(Category.builder().build());
+        Mono<Category> catToUpdateMono = Mono.just(Category.builder().description(description).build());
 
         webTestClient.patch()
                 .uri(CategoryController.BASE_URL + "asdfasdf")
