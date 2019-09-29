@@ -6,9 +6,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
+import org.reactivestreams.Publisher;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import static org.mockito.ArgumentMatchers.any;
 
 public class CategoryControllerTest {
 
@@ -50,6 +53,25 @@ public class CategoryControllerTest {
                 .uri(CategoryController.BASE_URL + id)
                 .exchange()
                 .expectBody(Category.class);
+    }
+
+    @Test
+    public void createFromStreamTest() {
+
+        BDDMockito.given(categoryRepository.saveAll(any(Publisher.class)))
+                .willReturn(Flux.just(Category.builder().build()));
+
+        Flux<Category> flux = Flux.just(
+                Category.builder().description("Cat1").build(),
+                Category.builder().description("Cat2").build()
+        );
+
+        webTestClient.post()
+                .uri(CategoryController.BASE_URL)
+                .body(flux, Category.class)
+                .exchange()
+                .expectStatus()
+                .isCreated();
     }
 
 }
